@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/braeden/projects/KeyConvert/backend/backend.csproj": {}
+    "/home/braed/projects/KeyConvert/backend/backend.csproj": {}
   },
   "projects": {
-    "/home/braeden/projects/KeyConvert/backend/backend.csproj": {
+    "/home/braed/projects/KeyConvert/backend/backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/braeden/projects/KeyConvert/backend/backend.csproj",
+        "projectUniqueName": "/home/braed/projects/KeyConvert/backend/backend.csproj",
         "projectName": "backend",
-        "projectPath": "/home/braeden/projects/KeyConvert/backend/backend.csproj",
-        "packagesPath": "/home/braeden/.nuget/packages/",
-        "outputPath": "/home/braeden/projects/KeyConvert/backend/obj/",
+        "projectPath": "/home/braed/projects/KeyConvert/backend/backend.csproj",
+        "packagesPath": "/home/braed/.nuget/packages/",
+        "outputPath": "/home/braed/projects/KeyConvert/backend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/braeden/.nuget/NuGet/NuGet.Config"
+          "/home/braed/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -38,9 +38,35 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "AspNetCore.HealthChecks.UI.Client": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[8.0.22, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.11, )"
+            },
+            "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.11, )"
+            },
+            "Pomelo.EntityFrameworkCore.MySql": {
+              "target": "Package",
+              "version": "[8.0.2, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
