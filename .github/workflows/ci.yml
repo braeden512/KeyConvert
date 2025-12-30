@@ -1,0 +1,131 @@
+name: CI - Build and Health Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: KeyConvert
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./backend
+      
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+        working-directory: ./backend
+      
+      - name: Update connection string for CI
+        run: |
+          cat > ./backend/appsettings.json << EOF
+          {
+            "ConnectionStrings": {
+              "DefaultConnection": "Server=localhost;Port=3306;Database=KeyConvert;User=root;Password=testpassword;AllowPublicKeyRetrieval=True;SslMode=None;"
+            },
+            "Logging": {
+              "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning"
+              }
+            },
+            "AllowedHosts": "*"
+          }
+          EOF
+      
+      - name: Create database tables
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -ptestpassword KeyConvert << EOF
+          CREATE TABLE IF NOT EXISTS Users (
+              UserID INT NOT NULL AUTO_INCREMENT,
+              UserGivenName VARCHAR(100) NOT NULL,
+              UserFamilyName VARCHAR(100) NOT NULL,
+              UserEmail VARCHAR(100) NOT NULL,
+              UserPassword VARCHAR(100) NOT NULL,
+              Salt TINYBLOB NOT NULL,
+              CreatedDateTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (UserID)
+          );
+          EOF
+      
+      - name: Start API
+        run: |
+          cd ./backend
+          dotnet run --no-build --configuration Release &
+          echo $! > api.pid
+          
+          # Wait for API to start (max 30 seconds)
+          timeout=30
+          elapsed=0
+          until curl -f http://localhost:5259/health > /dev/null 2>&1; do
+            sleep 1
+            elapsed=$((elapsed + 1))
+            if [ $elapsed -ge $timeout ]; then
+              echo "API failed to start within ${timeout} seconds"
+              exit 1
+            fi
+            echo "Waiting for API to start... (${elapsed}s)"
+          done
+          echo "API started successfully!"
+      
+      - name: Run Health Check
+        run: |
+          echo "Running health check..."
+          response=$(curl -s http://localhost:5259/health)
+          echo "Health check response:"
+          echo $response | jq '.'
+          
+          # Check if status is Healthy
+          status=$(echo $response | jq -r '.status')
+          if [ "$status" != "Healthy" ]; then
+            echo "Health check failed! Status: $status"
+            exit 1
+          fi
+          
+          echo "Health check passed!"
+      
+      - name: Test database connectivity
+        run: |
+          echo "Testing database endpoint..."
+          response=$(curl -s http://localhost:5259/test-db)
+          echo $response | jq '.'
+          
+          connected=$(echo $response | jq -r '.connected')
+          if [ "$connected" != "true" ]; then
+            echo "Database connectivity test failed!"
+            exit 1
+          fi
+          
+          echo "Database connectivity test passed!"
+      
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f ./backend/api.pid ]; then
+            kill $(cat ./backend/api.pid) || true
+          fi
