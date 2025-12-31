@@ -1,17 +1,26 @@
 using System.Reflection;
 using backend.Data;
+using DotNetEnv;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
+Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
+var dbServer = Environment.GetEnvironmentVariable("DB_SERVER");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+var connectionString =
+    $"Server={dbServer};Port={dbPort};Database={dbName};User={dbUser};Password={dbPassword};AllowPublicKeyRetrieval=True;SslMode=None;";
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
-    )
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");

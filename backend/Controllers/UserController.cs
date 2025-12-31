@@ -17,18 +17,24 @@ public class UserController : ControllerBase
         _context = context;
     }
 
-    // unfinished
     /// <summary>
     /// Get a user by ID
     /// </summary>
+    /// <response code="200">Returns the user</response>
+    /// <response code="400">If the user ID is invalid</response>
+    /// <response code="404">If the user is not found</response>
     [HttpGet("{id}")]
     public async Task<ActionResult<UserResponse>> GetUser(int id)
     {
+        if (id <= 0)
+        {
+            return BadRequest("Invalid user ID.");
+        }
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
         {
-            return NotFound();
+            return NotFound("User not found.");
         }
 
         // return the user details without the password
@@ -39,6 +45,7 @@ public class UserController : ControllerBase
             UserFamilyName = user.UserFamilyName,
             UserEmail = user.UserEmail,
             CreatedDateTime = user.CreatedDateTime,
+            UpdatedDateTime = user.UpdatedDateTime,
         };
 
         return response;
@@ -72,6 +79,7 @@ public class UserController : ControllerBase
             // set password to hashed password
             UserPassword = hashedPassword,
             CreatedDateTime = DateTime.UtcNow,
+            UpdatedDateTime = DateTime.UtcNow,
         };
 
         _context.Users.Add(user);
@@ -85,12 +93,125 @@ public class UserController : ControllerBase
             UserFamilyName = user.UserFamilyName,
             UserEmail = user.UserEmail,
             CreatedDateTime = user.CreatedDateTime,
+            UpdatedDateTime = user.UpdatedDateTime,
         };
 
         return CreatedAtAction(nameof(GetUser), new { id = user.UserID }, response);
     }
 
+    /// <summary>
+    /// Update user information
+    /// </summary>
+    /// <response code="200">Returns the updated user</response>
+    /// <response code="400">If the user ID is invalid</response>
+    /// <response code="404">If the user is not found</response>
+    [HttpPut("{id}")]
+    public async Task<ActionResult<UserResponse>> UpdateUser(int id, UpdateUserRequest request)
+    {
+        if (id <= 0)
+        {
+            return BadRequest("Invalid user ID.");
+        }
+        var user = await _context.Users.FindAsync(id);
+
+        if (user == null)
+        {
+            return NotFound("User not found.");
+        }
+        // update user details
+        user.UserGivenName = request.UserGivenName;
+        user.UserFamilyName = request.UserFamilyName;
+        user.UserEmail = request.UserEmail;
+        user.UpdatedDateTime = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return new UserResponse
+        {
+            UserID = user.UserID,
+            UserGivenName = user.UserGivenName,
+            UserFamilyName = user.UserFamilyName,
+            UserEmail = user.UserEmail,
+            CreatedDateTime = user.CreatedDateTime,
+            UpdatedDateTime = user.UpdatedDateTime,
+        };
+    }
+
+    /// <summary>
+    /// Delete a user by ID
+    /// </summary>
+    /// <response code="204">If the user was successfully deleted</response>
+    /// <response code="400">If the user ID is invalid</response>
+    /// <response code="404">If the user is not found</response>
+    [HttpDelete("{id}")]
+    // IActionResult for no content return
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        if (id <= 0)
+        {
+            return BadRequest("Invalid user ID.");
+        }
+        var user = await _context.Users.FindAsync(id);
+
+        if (user == null)
+        {
+            return NotFound("User not found.");
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Authenticate a user (login)
+    /// </summary>
+    /// <response code="200">Returns the authenticated user</response>
+    /// <response code="400">If the login data is invalid</response>
+    /// <response code="401">If the credentials are incorrect</response>
+    [HttpPost("authenticate")]
+    public async Task<ActionResult<LoginResponse>> AuthenticateUser(LoginRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+
+        // if user not found, return unauthorized
+        if (user == null)
+        {
+            return Unauthorized(new { message = "Invalid email or password" });
+        }
+
+        // use BCrypt to verify password
+        bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.UserPassword, user.UserPassword);
+
+        // if password is invalid, return unauthorized
+        if (!isValidPassword)
+        {
+            return Unauthorized(new { message = "Invalid email or password" });
+        }
+
+        // update last login datetime
+        user.LastLoginDateTime = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        // if valid, generate jwt token and return loginresponse
+        return Ok(
+            new LoginResponse
+            {
+                UserID = user.UserID,
+                UserEmail = user.UserEmail,
+                UserGivenName = user.UserGivenName,
+                UserFamilyName = user.UserFamilyName,
+                Token = "generate-jwt-token-here",
+            }
+        );
+    }
+
     // endpoint to get all users
     // endpoint to update a user
     // endpoint to delete a user
+    // endpoint to authenticate a user (login)
+    // endpoint to change user password
+    // endpoint to get a user by email
+    // MAYBE: endpoint to check email availability
 }

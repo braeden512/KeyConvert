@@ -27,4 +27,8 @@ public class User
     public required string UserPassword { get; set; }
 
     public DateTime CreatedDateTime { get; set; } = DateTime.UtcNow;
+
+    public DateTime UpdatedDateTime { get; set; } = DateTime.UtcNow;
+
+    public DateTime? LastLoginDateTime { get; set; }
 }
