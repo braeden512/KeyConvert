@@ -26,3 +26,21 @@ dist-ssr
 # .NET build outputs
 **/bin/
 **/obj/
+
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Visual Studio cache/options
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
