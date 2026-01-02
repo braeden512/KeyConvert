@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* light mode*/
+  --primary: 42 155 123;
+  --primary-foreground: 255 255 255;
+  --secondary: 3 20 15;
+  --secondary-foreground: 255 255 255;
+  --tertiary: 219 245 238;
+  --subtle: 62 151 126;
+
+  --neutral-primary: 133 136 136;
+  --neutral-secondary: 34 35 35;
+  --neutral-tertiary: 170 174 174;
+  --neutral-standard: 238 241 241;
+
+  /* mappings for shadcn/ui */
+  --background: 219 245 238;
+  --foreground: 3 20 15;
+  --card: 255 255 255;
+  --card-foreground: 3 20 15;
+  --popover: 255 255 255;
+  --popover-foreground: 3 20 15;
+  --muted: 219 245 238;
+  --muted-foreground: 133 136 136;
+  --accent: 219 245 238;
+  --accent-foreground: 3 20 15;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 209 213 213;
+  --input: 209 213 213;
+  --ring: 170 174 174;
+  --radius: 0.5rem;
+}
+
+:root.dark {
+  /* dark mode */
+  --primary: 42 155 123;
+  --primary-foreground: 255 255 255;
+  --secondary: 42 155 123;
+  --secondary-foreground: 255 255 255;
+  --tertiary: 3 20 15;
+  --subtle: 62 151 126;
+
+  --neutral-primary: 209 213 213;
+  --neutral-secondary: 238 241 241;
+  --neutral-tertiary: 133 136 136;
+  --neutral-standard: 19 27 25;
+
+  /* mappings for dark mode */
+  --background: 3 20 15;
+  --foreground: 238 241 241;
+  --card: 19 27 25;
+  --card-foreground: 238 241 241;
+  --popover: 3 20 15;
+  --popover-foreground: 238 241 241;
+  --muted: 3 20 15;
+  --muted-foreground: 209 213 213;
+  --accent: 3 20 15;
+  --accent-foreground: 238 241 241;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 62 151 126;
+  --input: 62 151 126;
+  --ring: 42 155 123;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* used for gradient on auth cards */
+@layer utilities {
+  .bg-gradient-card {
+    background: linear-gradient(to bottom, rgb(var(--neutral-standard)), rgb(var(--tertiary)));
+  }
+}
