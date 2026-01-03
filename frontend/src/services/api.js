@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// we can read this in from env later for different environments
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.API_URL || "http://localhost:5000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,5 +8,22 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// request interceptor to add auth token to requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+// response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(error)
+);
 
 export default api;
