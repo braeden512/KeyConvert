@@ -43,13 +43,13 @@ public class UserController : ControllerBase
     {
         if (id <= 0)
         {
-            return BadRequest("Invalid user ID.");
+            return BadRequest(new { message = "Invalid user ID." });
         }
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound(new { message = "User not found." });
         }
 
         // return the user details without the password
@@ -74,19 +74,18 @@ public class UserController : ControllerBase
     /// <status code="404">If the user is not found</status>
     [HttpGet("current")]
     [Authorize]
-    [RequireOwnership]
     public async Task<ActionResult<UserResponse>> GetCurrentUser()
     {
         var userId = User.GetUserId();
         if (userId == null)
         {
-            return Unauthorized();
+            return Unauthorized(new { message = "User is not authenticated." });
         }
 
         var user = await _context.Users.FindAsync(userId.Value);
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound(new { message = "User not found." });
         }
 
         var response = new UserResponse
@@ -114,7 +113,7 @@ public class UserController : ControllerBase
     {
         if (await _context.Users.AnyAsync(u => u.UserEmail == request.UserEmail))
         {
-            return BadRequest("A user with this email already exists.");
+            return BadRequest(new { message = "A user with this email already exists." });
         }
 
         // eventually check for strength of password, valid email format, etc.
@@ -136,31 +135,32 @@ public class UserController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // return the created user details without the password
-        var response = new UserResponse
+        var token = JwtTokenGenerator.GenerateToken(user);
+
+        // return the login response with token so they can instantly use the account
+        var response = new LoginResponse
         {
             UserID = user.UserID,
             UserGivenName = user.UserGivenName,
             UserFamilyName = user.UserFamilyName,
             UserEmail = user.UserEmail,
-            CreatedDateTime = user.CreatedDateTime,
-            UpdatedDateTime = user.UpdatedDateTime,
+            Token = token,
         };
 
         return CreatedAtAction(nameof(GetUser), new { id = user.UserID }, response);
     }
 
     /// <summary>
-    /// Authenticate a user (login)
+    /// Login a user and return a JWT token
     /// </summary>
     /// <response code="200">Returns the authenticated user</response>
     /// <response code="401">If the credentials are incorrect</response>
-    [HttpPost("authenticate")]
-    public async Task<ActionResult<LoginResponse>> AuthenticateUser(LoginRequest request)
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
 
-        // if user not found, return unauthorized
+        // if user not found, return a bad request
         if (user == null)
         {
             return Unauthorized(new { message = "Invalid email or password" });
@@ -194,6 +194,36 @@ public class UserController : ControllerBase
         );
     }
 
+    // a little scuffed at the minute, will revisit later if we wanna do password resets properly
+    // /// <summary>
+    // /// Request password reset (NOT CURRENTLY WORKING)
+    // /// </summary>
+    // [HttpPost("forgot-password")]
+    // public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    // {
+    //     var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+    //     // don't reveal whether the email exists or not for security
+    //     if (user == null)
+    //     {
+    //         return Ok(
+    //             new
+    //             {
+    //                 message = "If an account with that email exists, a password reset link has been sent.",
+    //             }
+    //         );
+    //     }
+
+    //     // generate reset token and store in db with expiration
+    //     // send email with reset link containing token
+
+    //     return Ok(
+    //         new
+    //         {
+    //             message = "If an account with that email exists, a password reset link has been sent.",
+    //         }
+    //     );
+    // }
+
     /// <summary>
     /// Update user information
     /// </summary>
@@ -207,19 +237,19 @@ public class UserController : ControllerBase
     {
         if (id <= 0)
         {
-            return BadRequest("Invalid user ID.");
+            return BadRequest(new { message = "Invalid user ID." });
         }
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound(new { message = "User not found." });
         }
 
         // check if email is being changed to one that already exists (not including own)
         if (await _context.Users.AnyAsync(u => u.UserEmail == request.UserEmail && u.UserID != id))
         {
-            return BadRequest("A user with this email already exists.");
+            return BadRequest(new { message = "A user with this email already exists." });
         }
         // update user details
         user.UserGivenName = request.UserGivenName;
@@ -253,20 +283,20 @@ public class UserController : ControllerBase
     {
         if (id <= 0)
         {
-            return BadRequest("Invalid user ID.");
+            return BadRequest(new { message = "Invalid user ID." });
         }
 
         var user = await _context.Users.FindAsync(id);
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound(new { message = "User not found." });
         }
 
         // verify current password
         bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.UserPassword);
         if (!isValidPassword)
         {
-            return BadRequest("Current password is incorrect.");
+            return BadRequest(new { message = "Current password is incorrect." });
         }
 
         // hash new password
@@ -295,13 +325,13 @@ public class UserController : ControllerBase
     {
         if (id <= 0)
         {
-            return BadRequest("Invalid user ID.");
+            return BadRequest(new { message = "Invalid user ID." });
         }
 
         var user = await _context.Users.FindAsync(id);
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound(new { message = "User not found." });
         }
 
         _context.Users.Remove(user);

@@ -16,6 +16,9 @@
   --neutral-tertiary: 170 174 174;
   --neutral-standard: 238 241 241;
 
+  --warning: 201 109 109;
+  --warning-foreground: 255 255 255;
+
   /* mappings for shadcn/ui */
   --background: 219 245 238;
   --foreground: 3 20 15;
@@ -48,6 +51,9 @@
   --neutral-secondary: 238 241 241;
   --neutral-tertiary: 133 136 136;
   --neutral-standard: 19 27 25;
+
+  --warning: 115 28 28;
+  --warning-foreground: 255 255 255;
 
   /* mappings for dark mode */
   --background: 3 20 15;

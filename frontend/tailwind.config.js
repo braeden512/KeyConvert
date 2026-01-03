@@ -26,6 +26,11 @@ export default {
 					standard: 'rgb(var(--neutral-standard) / <alpha-value>)',
 				},
 
+				warning: {
+					DEFAULT: 'rgb(var(--warning) / <alpha-value>)',
+					foreground: 'rgb(var(--warning-foreground) / <alpha-value>)',
+				},
+
 				// shadcn/ui semantic tokens
 				background: 'rgb(var(--background) / <alpha-value>)',
 				foreground: 'rgb(var(--foreground) / <alpha-value>)',
